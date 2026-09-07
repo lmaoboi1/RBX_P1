@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile App Layout</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        @font-face {
+            font-family: 'MyCustomFont';
+            /* Looks for the font installed on your computer */
+            src: local('Adlinnaka Bold Demo'), local('Adlinnaka-Bold-Demo');
+            /* If hosting online, add your file path here like this: */
+            /* src: url('fonts/Adlinnaka-Bold-Demo.woff2') format('woff2'); */
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: sans-serif;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .mobile-container {
+            width: 100%;
+            height: 100%;
+            max-width: 430px; /* Limits width on desktop to look like a phone */
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .layout-image {
+            width: 100%;
+            display: block;
+            object-fit: contain;
+        }
+
+        .header {
+            flex: 0 0 auto;
+            width: 100%;
+            z-index: 10;
+            background-color: #ffffff;
+            cursor: pointer;
+        }
+
+        .main-content {
+            flex: 1 1 auto;
+            width: 100%;
+            overflow-y: auto;
+            background-color: #ffffff;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .main-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        .footer {
+            flex: 0 0 auto;
+            width: 100%;
+            z-index: 10;
+            background-color: #ffffff;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .side-panel {
+            position: absolute;
+            top: 0;
+            left: -85%;
+            width: 80%;
+            height: 100%;
+            background-color: #ffffff;
+            z-index: 30;
+            transition: left 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+        }
+
+        .side-panel.active {
+            left: 0;
+        }
+
+        .panel-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+            cursor: pointer;
+        }
+
+        .panel-image-wrapper {
+            position: relative;
+            width: 100%;
+            display: block;
+        }
+
+        /* ==================================================== */
+        /* ⚙️ CONFIGURATION: SIDE PANEL ROBUX COVER             */
+        /* Edit the values below to perfectly match the design  */
+        /* ==================================================== */
+        :root {
+            /* --- 1. POSITION & SIZE --- */
+            --cover-top: 19.1%;           /* Move Up / Down */
+            --cover-left: 21%;            /* Move Left / Right */
+            --cover-width: 25%;           /* Width of the white box */
+            --cover-height: 3.5%;         /* Height of the white box */
+            
+            /* --- 2. TEXT APPEARANCE --- */
+            --text-size: 16px;            /* Size of the numbers */
+            --text-color: #191B1D;        /* Slightly softer black, matches UI */
+            --text-weight: 700;           /* Boldness (600, 700, 800) */
+            --text-spacing: -0.5px;       /* Squeeze numbers closer together */
+            --text-font: 'MyCustomFont', sans-serif; /* Inter closely matches the UI font */
+            
+            /* --- 3. DEBUG TOOL --- */
+            /* Change 'transparent' to '1px solid red' to see the box bounds */
+            --debug-border: transparent;  
+        }
+
+        .robux-overlay-value {
+            position: absolute;
+            top: var(--cover-top);
+            left: var(--cover-left);
+            width: var(--cover-width);
+            height: var(--cover-height);
+            
+            background-color: #ffffff;
+            color: var(--text-color);
+            font-family: var(--text-font);
+            font-weight: var(--text-weight);
+            font-size: var(--text-size);
+            letter-spacing: var(--text-spacing);
+            border: var(--debug-border);
+            
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 2px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .game-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            font-family: 'Montserrat', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            color: #000000;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            
+            /* Smooth scale and fade transition */
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.17, 0.89, 0.32, 1.2);
+        }
+        
+        .game-container.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        .game-top-bar {
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+        }
+
+        .back-button {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f0f0;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: background 0.2s;
+        }
+
+        .back-button:active {
+            background: #e0e0e0;
+        }
+
+        .header-container {
+            position: absolute;
+            top: 12vh;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            z-index: 20;
+            will-change: transform;
+            --pop-rot-1: -4deg;
+            --pop-rot-2: 2deg;
+        }
+
+        .header-container.animate-pop {
+            animation: counterPop 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes counterPop {
+            0% { transform: translateX(-50%) scale(1) rotate(0deg); }
+            20% { transform: translateX(-50%) scale(1.12) rotate(var(--pop-rot-1)); }
+            50% { transform: translateX(-50%) scale(0.96) rotate(var(--pop-rot-2)); }
+            75% { transform: translateX(-50%) scale(1.02) rotate(0deg); }
+            100% { transform: translateX(-50%) scale(1) rotate(0deg); }
+        }
+
+        .counter-icon {
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+        }
+
+        .counter-value {
+            color: #201f25;
+            font-size: 64px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            font-family: 'Montserrat', sans-serif;
+            min-width: 20px;
+        }
+
+        .game-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .main-robux {
+            width: 260px;
+            max-width: 65vw;
+            height: auto;
+            cursor: pointer;
+            z-index: 10;
+            transition: transform 0.6s cubic-bezier(0.34, 2.2, 0.64, 1), 
+                        filter 0.6s cubic-bezier(0.34, 2.2, 0.64, 1);
+            transform-origin: center;
+            will-change: transform, filter;
+        }
+
+        .main-robux.pressing {
+            transform: scale(0.92);
+            transition: transform 0.05s ease-out, filter 0.05s ease-out;
+        }
+
+        .particle {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            pointer-events: none;
+            z-index: 15;
+            object-fit: contain;
+            will-change: transform, opacity;
+            animation: particleFly 0.8s cubic-bezier(0.21, 0.83, 0.26, 1) forwards;
+        }
+
+        @keyframes particleFly {
+            0% {
+                transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1) rotate(var(--rot));
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-container">
+        
+        <!-- Overlay -->
+        <div class="overlay" id="overlay"></div>
+
+        <!-- Side Panel -->
+        <div class="side-panel" id="sidePanel">
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; height: 100%;">
+                <div class="panel-image-wrapper">
+                    <img src="https://i.ibb.co/CLV5zGC/Gemini-Generated-Image-87nw8887nw8887nw.png" alt="Side Panel" class="panel-image" id="panelImage">
+                    <div class="robux-overlay-value" id="panelRobuxDisplay">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full Screen Game -->
+        <div class="game-container" id="gameContainer">
+            <div class="game-top-bar">
+                <div class="back-button" id="backButton">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 18L9 12L15 6" stroke="#201f25" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="header-container" id="gameHeader">
+                <img src="https://i.ibb.co/S4Q2j0L3/robux-lite.png" alt="Robux Icon" class="counter-icon">
+                <div id="counter-text" class="counter-value">0</div>
+            </div>
+
+            <div class="game-area" id="gameArea">
+                <img 
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Robux_2019_Logo_gold.svg/960px-Robux_2019_Logo_gold.svg.png" 
+                    alt="Clickable Robux" 
+                    id="main-robux" 
+                    class="main-robux"
+                    draggable="false"
+                >
+            </div>
+        </div>
+
+        <!-- Main App Layout -->
+        <header class="header" id="headerButton">
+            <img src="https://i.ibb.co/CpxC5ZXn/Header.png" alt="Header" class="layout-image">
+        </header>
+
+        <main class="main-content">
+            <img src="https://i.ibb.co/9mLd2gP1/Main-1.png" alt="Main Content" class="layout-image">
+        </main>
+
+        <footer class="footer">
+            <img src="https://i.ibb.co/Ndhr6LQ7/Footer.png" alt="Footer" class="layout-image">
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Navigation & Panel Logic ---
+            const headerButton = document.getElementById('headerButton');
+            const sidePanel = document.getElementById('sidePanel');
+            const overlay = document.getElementById('overlay');
+            const panelImage = document.getElementById('panelImage');
+            const gameContainer = document.getElementById('gameContainer');
+            const backButton = document.getElementById('backButton');
+
+            const openPanel = () => {
+                sidePanel.classList.add('active');
+                overlay.classList.add('active');
+            };
+
+            const closePanel = () => {
+                sidePanel.classList.remove('active');
+                overlay.classList.remove('active');
+            };
+
+            headerButton.addEventListener('click', openPanel);
+            overlay.addEventListener('click', closePanel);
+
+            panelImage.addEventListener('click', () => {
+                gameContainer.classList.add('active');
+            });
+
+            // Smooth counting animation function
+            function animateValue(obj, start, end, duration) {
+                let startTimestamp = null;
+                const step = (timestamp) => {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    // easeOutQuart for a smooth deceleration at the end
+                    const easeOut = 1 - Math.pow(1 - progress, 4);
+                    const currentVal = Math.floor(easeOut * (end - start) + start);
+                    
+                    obj.innerText = formatNumber(currentVal);
+                    
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        obj.innerText = formatNumber(end);
+                    }
+                };
+                window.requestAnimationFrame(step);
+            }
+
+            backButton.addEventListener('click', () => {
+                gameContainer.classList.remove('active');
+                
+                // Wait for the 0.4s CSS transition to fully finish before starting the counter animation
+                setTimeout(() => {
+                    // Triggers the counting animation from 0 to totalRobux over 1.5 seconds
+                    animateValue(panelRobuxDisplay, 0, totalRobux, 1500); 
+                }, 400);
+            });
+
+            // --- Game Logic ---
+            let totalRobux = 0; 
+            let currentDisplayRobux = 0;
+            let clickCount = 0;
+
+            const gameHeader = document.getElementById('gameHeader');
+            const counterText = document.getElementById('counter-text');
+            const mainRobux = document.getElementById('main-robux');
+            const panelRobuxDisplay = document.getElementById('panelRobuxDisplay');
+            const particleImgSrc = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Robux_2019_Logo_gold.svg/960px-Robux_2019_Logo_gold.svg.png";
+
+            // Initialize text
+            counterText.innerText = totalRobux;
+
+            function formatNumber(num) {
+                if (num >= 1e9) return (num / 1e9).toFixed(2).replace(/\.00$/, '') + 'B';
+                if (num >= 1e6) return (num / 1e6).toFixed(2).replace(/\.00$/, '') + 'M';
+                if (num >= 1e3) return (num / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+                return num.toString();
+            }
+
+            function getClickValue() {
+                const baseValue = Math.floor(Math.random() * 3) + 1;
+                const progression = Math.floor(Math.pow(clickCount, 2.5));
+                return Math.min(500000, baseValue + progression);
+            }
+
+            function spawnParticles(x, y) {
+                const particleCount = Math.floor(Math.random() * 3) + 4;
+                const containerRect = gameContainer.getBoundingClientRect();
+                
+                // Adjust coordinates so they spawn relative to the game container
+                const relX = x - containerRect.left;
+                const relY = y - containerRect.top;
+
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('img');
+                    particle.src = particleImgSrc;
+                    particle.className = 'particle';
+                    
+                    particle.style.left = `${relX}px`;
+                    particle.style.top = `${relY}px`;
+                    
+                    const angle = Math.random() * Math.PI * 2; 
+                    const distance = 80 + Math.random() * 120; 
+                    
+                    const tx = Math.cos(angle) * distance;
+                    const ty = Math.sin(angle) * distance;
+                    const rotation = (Math.random() - 0.5) * 360; 
+
+                    particle.style.setProperty('--tx', `${tx}px`);
+                    particle.style.setProperty('--ty', `${ty}px`);
+                    particle.style.setProperty('--rot', `${rotation}deg`);
+                    
+                    gameContainer.appendChild(particle);
+                    
+                    setTimeout(() => {
+                        particle.remove();
+                    }, 800);
+                }
+            }
+
+            function triggerClick(e) {
+                clickCount++;
+                const earnedRobux = getClickValue();
+                totalRobux += earnedRobux;
+                
+                const dir = Math.random() > 0.5 ? 1 : -1;
+                const angle1 = dir * (Math.random() * 1 + 0.5); 
+                const angle2 = -dir * (Math.random() * 0.5 + 0.2); 
+                
+                gameHeader.style.setProperty('--pop-rot-1', `${angle1}deg`);
+                gameHeader.style.setProperty('--pop-rot-2', `${angle2}deg`);
+                
+                gameHeader.classList.remove('animate-pop');
+                void gameHeader.offsetWidth; 
+                gameHeader.classList.add('animate-pop');
+                
+                currentDisplayRobux = totalRobux;
+                counterText.innerText = formatNumber(totalRobux);
+                // Note: panelRobuxDisplay update removed here so the back button animation handles it
+
+                let clickX, clickY;
+                if (e && e.clientX && e.clientY) {
+                    clickX = e.clientX;
+                    clickY = e.clientY;
+                } else {
+                    const rect = mainRobux.getBoundingClientRect();
+                    clickX = rect.left + rect.width / 2;
+                    clickY = rect.top + rect.height / 2;
+                }
+                
+                spawnParticles(clickX, clickY);
+            }
+
+            mainRobux.addEventListener('pointerdown', (e) => {
+                mainRobux.classList.add('pressing');
+                triggerClick(e);
+                if (window.navigator && window.navigator.vibrate) {
+                    window.navigator.vibrate(10);
+                }
+            });
+
+            mainRobux.addEventListener('pointerup', () => mainRobux.classList.remove('pressing'));
+            mainRobux.addEventListener('pointerleave', () => mainRobux.classList.remove('pressing'));
+            mainRobux.addEventListener('pointercancel', () => mainRobux.classList.remove('pressing'));
+            
+            gameContainer.addEventListener('contextmenu', (e) => e.preventDefault());
+        });
+    </script>
+</body>
+</html>
